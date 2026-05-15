@@ -149,7 +149,7 @@ class GeminiClient(BaseLLMClient):
         return min(scores) if scores else 0.5
 
     def _isValidateFormat(self, api_key: str) -> bool:
-        '''validate if the key is of OpenAI apikey format'''
+        '''validate if the key is of Gemini apikey format'''
         return ( type(api_key)==str and len(api_key)>0 and api_key.startswith('AI') )
     
 class LlamaClient(BaseLLMClient):
@@ -234,10 +234,8 @@ class PromptBuilder:
 
         Context:
         {context}
-
         Visible Screen Text:
         {screen_text}
-
         Previous Interaction Trace:
         {trace_summary}
 
