@@ -592,7 +592,8 @@ execra/
 ├── 📁 docs/
 │   ├── architecture.md
 │   ├── api_reference.md
-│   └── contributing_guide.md
+│   ├── contributing_guide.md
+│   └── api_playground.html ← Interactive API explorer
 │
 ├── 📁 scripts/
 │   └── download_models.py
