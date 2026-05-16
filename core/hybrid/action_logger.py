@@ -3,6 +3,8 @@ from datetime import datetime
 from typing import Optional, Literal
 from pydantic import BaseModel
 import aiosqlite
+import os
+
 
 class ActionRecord(BaseModel):
     id: str
@@ -19,6 +21,9 @@ class ActionLogger:
 
     def __init__(self, db_path: str = "data/execra.db"):
         """Initialize logger with database path and empty undo stack (max 50)."""
+        if db_path != ":memory:":
+            os.makedirs(os.path.dirname(db_path), exist_ok=True)
+
         self.db_path = db_path
         self._stack = deque(maxlen=50)
 
@@ -41,8 +46,12 @@ class ActionLogger:
 
     async def log_action(self, action: ActionRecord) -> None:
         """Save action to SQLite and append to in-memory undo stack."""
+        await self._init_db()  # ensure table exists
+
+        # Add to in-memory deque
         self._stack.append(action)
 
+        # Save to SQLite
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute("""
                 INSERT INTO action_log VALUES (?, ?, ?, ?, ?, ?, ?, ?)
@@ -66,6 +75,8 @@ class ActionLogger:
     
     async def get_history(self, limit: int = 20, offset: int = 0) -> list[ActionRecord]:
         """Fetch paginated action history from SQLite, newest first."""
+        await self._init_db()  # ensure table exists
+
         async with aiosqlite.connect(self.db_path) as db:
             cursor = await db.execute("""
                 SELECT * FROM action_log
@@ -87,9 +98,10 @@ class ActionLogger:
             )
             for row in rows
         ]
-    
     async def clear_session(self, session_id: str) -> None:
         """Delete all actions for the session from SQLite and clear the in-memory stack."""
+        await self._init_db()  # ensure table exists
+
         async with aiosqlite.connect(self.db_path) as db:
             await db.execute(
                 "DELETE FROM action_log WHERE session_id = ?",
